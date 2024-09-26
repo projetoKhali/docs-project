@@ -7,9 +7,10 @@ Este repositório contém as documentações dos projetos da KHALI, incluindo ba
 <details>
   <summary><strong>API5</strong></summary>
 
-  - [Backlog](./api5/backlog.md)
-  - [Requisitos](./api5/requisitos.md)
-  - [Perguntas Frequentes](./api5/perguntas.md)
+  - [Backlog do produto](./api5/product-backlog.md)
+  - [Requisitos do projeto](./api5/project-requirements.md)
+  - [Perguntas ao cliente](./api5/customer-questionnaire.md)
+  - [Documentação do banco de dados](./api5/bd_documentation.pdf)
 
 </details>
 
