@@ -4,7 +4,7 @@ Esta documentação explica como funciona a configuração do fluxo de **Integra
 
 ---
 
-## **1. O que é CI (Continuous Integration)?**
+## 1. O que é CI (Continuous Integration)?
 
 CI é uma prática de desenvolvimento que automatiza a integração de código de diferentes desenvolvedores em um único repositório. O objetivo é detectar erros rapidamente, garantir que o código seja testado e esteja funcionando corretamente antes de ser integrado ao projeto principal.
 
@@ -12,7 +12,7 @@ No nosso caso, usamos **GitHub Actions** como ferramenta de CI, que executa pipe
 
 ---
 
-## **2. Configuração da CI**
+## 2. Configuração da CI
 
 Em ambos submódulos, temos três pipelines principais configuradas:
 
@@ -23,39 +23,19 @@ Em ambos submódulos, temos três pipelines principais configuradas:
 ### Build Pipeline
 Pipeline responsável por compilar o código para produção.
 
-#### Back-end
-
-- **Arquitetura do Pipeline**:
-  - **Configuração do ambiente Go**: Utiliza a ação `setup-go` para configurar o Go no ambiente de CI.
-  - **Geração de arquivos**: Executa o script de geração de arquivos necessários para o funcionamento do projeto.
-  - **Execução dos testes unitários**: Utiliza o comando `make test` para rodar os testes unitários, com as tags de produção definidas.
-
-#### Front-end
-
-- **Arquitetura do Pipeline**:
-  - **Configuração do ambiente Node.js**: Utiliza a ação `setup-node` para configurar o ambiente Node.js, especificando a versão necessária.
-  - **Instalação das dependências**: O comando `npm install` é executado para garantir que todas as dependências do projeto estejam instaladas.
-  - **Execução dos testes unitários**: Utiliza o comando `npm run test`, que por sua vez roda os testes com Jest, garantindo que o código front-end esteja funcionando conforme o esperado.
-
 ### Unit tests
-Pipeline responsável por executar os testes unitários do projeto.
-
-#### Back-end
-  - **Execução dos testes unitários**: Utiliza o comando `make test` para rodar os testes unitários. Este comando é configurado para rodar os testes com as tags de produção, garantindo que o código seja testado em um ambiente de produção adequado.
-
-#### Front-end
-  - **Execução dos testes unitários**: Utiliza o comando `npm run test` para rodar os testes com Jest. O Jest executa os testes unitários, verificando se o código front-end está funcionando corretamente e validando as funcionalidades de cada componente do sistema.
+Pipeline responsável por rodar os testes unitários.
 
 ### Integration tests
-Pipeline responsável por executar os testes de integração, garantindo que as diferentes partes do sistema funcionem corretamente juntas.
-
-#### Back-end
-
-- **Arquitetura do Pipeline**:
-  - **Execução dos testes de integração**: Utiliza o comando `make test-integration` para rodar os testes de integração. Este comando executa os testes em um ambiente que simula a interação entre diferentes componentes do sistema, validando que as integrações entre os módulos estejam funcionando corretamente.
-
-#### Front-end
+Pipeline responsável por rodar os testes unitários.
 
 
+## 3. Rotina de CI
 
+### Gatilhos para pipelines de testes
+Nossa pipeline de CI roda com os gatilhos de `push` em todas as branches, e de `pull request` em branches específicas, sendo elas:
+    Dev: com o objetivo de garantir a consistência do código na branch dev, que é a penúltima branch para qual os commits vão antes da finalização de uma sprint, geralmente com a antecedência de 1 semana antes do pull request para Main.
+    Main: como uma segunda etapa para assegurar a ausência de falhas no projeto, sendo a última branch que recebe o código, e portanto, precisa estar perfeita.
 
+### Gatilhos para pipelines de build
+As pipelines de build rodam com os mesmos gatilhos, porém em todas as branches para as duas ações, `push` e `pull request`, e isso se da pela necessidade ainda maior que é o build estar funcionando sempre, independente de que momento a equipe de desenvolvimento esteja, seja no início, meio ou fim da sprint.
