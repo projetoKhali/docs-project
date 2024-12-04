@@ -25,6 +25,7 @@ Este documento detalha o processo de deploy da aplicação API5 Frontend hospeda
 - Todas as tarefas da sprint foram concluídas.
 - Todos os testes automatizados passaram com sucesso.
 - O pipeline de CI/CD foi validado sem erros na branch main.
+> swagger está disponível em http://localhost:8080/swagger/index.html executando localmente
 
 ---
 
