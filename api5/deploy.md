@@ -1,90 +1,131 @@
 # Documentação de Deploy
 
-Documentação de Deploy para API5 Frontend<br>
-Tânia Cruz
+**API5**  
+*Tânia Cruz*  
 
 ---
 
-## 1. Objetivo
+## 1. O que é Deploy
 
-Este documento detalha o processo de deploy da aplicação API5 Frontend hospedada no serviço Azure Container Apps, configurada para receber atualizações a partir da branch main. O deploy é realizado no final de cada sprint para integrar as demandas desenvolvidas.
+Deploy (ou "deployment") é o processo de disponibilizar uma aplicação ou sistema em um ambiente específico, como produção, desenvolvimento ou testes. Essa etapa final do ciclo de desenvolvimento de software torna o código desenvolvido e testado acessível para usuários finais ou outras partes interessadas.
+
+A automatização do Deploy permite que atualizações no GitHub sejam publicadas automaticamente, sem intervenção manual, garantindo maior eficiência e consistência.
 
 ---
 
 ## 2. Pré-requisitos
-#### Ferramentas Necessárias
-- Conta de acesso ao repositório no GitHub.
-- Acesso ao Azure com permissões para gerenciar o serviço de container.
-- GitHub Actions configurado com as seguintes permissões:
-    - Secrets para credenciais e variáveis de ambiente.
 
-#### Branch para Deploy
-- O deploy ocorre somente a partir da branch main.
-
-#### Checklist Pré-Deploy
-- Todas as tarefas da sprint foram concluídas.
-- Todos os testes automatizados passaram com sucesso.
-- O pipeline de CI/CD foi validado sem erros na branch main.
-> swagger está disponível em http://localhost:8080/swagger/index.html executando localmente
+- Utilização de serviços Azure.
 
 ---
 
-## 3. Fluxo de Deploy
+## 3. Configuração do Deploy e Ferramentas Utilizadas
 
-#### Gatilho
-O deploy é acionado automaticamente ao realizar um push na branch main.
+### Infraestrutura
+- **Servidores**:
+  - 2 para bancos de dados:
+    - **DB**: Azure Database for PostgreSQL - Flexible Server.
+    - **DW**: Azure Database for PostgreSQL - Flexible Server.
+  - 2 para aplicações:
+    - **Backend** e **Frontend**: Azure Container Apps.
 
-#### Pipeline do GitHub Actions
-- O arquivo de configuração usado para gerenciar o deploy é o seguinte:
-```yaml
-name: Deploy
-
-on:
-  push:
-    branches: [ "main" ]
-
-jobs:
-
-  deploy:
-    runs-on: ubuntu-latest
-    environment: production
-    env:
-      # Variáveis de banco de dados
-      DB_HOST: ${{ secrets.DB_HOST }}
-      ...
-      
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: 'Login via Azure CLI'
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - name: Env
-      shell: bash
-      run: echo -e "
-        DB_HOST=${DB_HOST}\r
-        DB_PORT=${DB_PORT}\r
-        ..." > .env.production
-
-    - name: 'Build and push image'
-      uses: azure/docker-login@v1
-      ...
-```
-
-#### Etapas do Deploy
-1. Login no Azure CLI: O pipeline autentica automaticamente na conta da Azure usando o secret AZURE_CREDENTIALS.
-2. Configuração de Variáveis de Ambiente: Um arquivo .env.production é gerado a partir dos valores armazenados nos secrets do GitHub.
-3. Build da Imagem: A aplicação é empacotada em uma imagem Docker.
-4. Push para o Registro Azure: A imagem é enviada para o Azure Container Registry configurado.
+### Ferramentas
+- **Docker**: Para criação das imagens das aplicações (backend e frontend).
+- **Azure Container Registry**: Para armazenamento das imagens Docker.
+- **GitHub Actions**: Para automatizar o processo de Deploy.
 
 ---
 
-## 4. Validação Pós-Deploy
-#### Checklist de Validação
-- Verificar se o container está em execução no Azure.
-- Testar manualmente as principais rotas da API no endereço:
-https://api5frontend.kindmushroom-02aec086.brazilsouth.azurecontainerapps.io
-- Monitorar logs e métricas por 24 horas para identificar erros ou falhas.
-- Conferir a comunicação entre os serviços, incluindo a conexão com o banco de dados e o Data Warehouse.
+## 4. Fluxo para Realização do Deploy
+
+1. **Configuração de Bancos de Dados**:
+   - Criar dois Azure Database for PostgreSQL - Flexible Server, para o DB e o DW.
+   - Inserir as credenciais desses bancos no arquivo `.env` local, permitindo que a aplicação local alimente os bancos de dados hospedados na Azure.
+
+2. **Configuração de Ambiente de Produção**:
+   - Criar o arquivo `.env.production` contendo as credenciais dos bancos de dados do ambiente de produção (Azure).
+
+3. **Configuração de Imagens Docker**:
+   - Criar arquivos `Dockerfile` separados para backend e frontend, incluindo o comando:
+     ```dockerfile
+     COPY .env.production .env
+     ```
+     Isso garante que o arquivo `.env` seja sobrescrito pelo `.env.production`.
+
+4. **Build e Registro de Imagens**:
+   - Fazer build das imagens Docker.
+   - Criar dois Container Registry na Azure e, via terminal, fazer login no Azure e enviar (`push`) as imagens Docker seguindo as instruções de "Quick Start" da Azure.
+
+5. **Configuração de Container Apps**:
+   - Criar dois Azure Container Apps e configurar cada um para utilizar as imagens correspondentes no Container Registry.
+
+---
+
+## 5. Medida de Segurança
+
+- Mensagens de erro no código podem expor credenciais sensíveis. Para mitigar esse risco:
+  - Definir `LOCALHOST=FALSE` no `.env.production` e `LOCALHOST=TRUE` no `.env`.
+  - Implementar um mecanismo para que, quando `LOCALHOST=FALSE`, as mensagens de erro sejam genéricas, como "Erro".
+
+---
+
+## 6. Fluxo para Automatização do Deploy com GitHub Actions
+
+1. **Autenticação da Azure**:
+   - Criar credenciais para autenticação seguindo [esta documentação](https://learn.microsoft.com/en-us/azure/container-instances/container-instances-github-action).
+
+2. **Integração do GitHub com Azure Container Registry**:
+   - Configurar o GitHub para realizar `push` e `pull` das imagens Docker, utilizando as credenciais geradas no passo anterior.
+
+3. **Configuração de Credenciais no GitHub**:
+   - Registrar as credenciais no GitHub como *secrets*.
+
+4. **Configuração do Workflow**:
+   - Criar o arquivo `.github/workflows/deploy.yml` com o YAML abaixo, utilizando as credenciais configuradas como *secrets*:
+     ```yaml
+     name: Deploy
+
+     on:
+       push:
+         branches: [ "main" ]
+
+     jobs:
+       deploy:
+         runs-on: ubuntu-latest
+         environment: production
+         env:
+           DB_HOST: ${{ secrets.DB_HOST }}
+           ...
+         
+         steps:
+         - uses: actions/checkout@v4
+
+         - name: 'Login via Azure CLI'
+           uses: azure/login@v1
+           with:
+             creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+         - name: Env
+           shell: bash
+           run: echo -e "
+             DB_HOST=${DB_HOST}\r
+             ..." > .env.production
+
+         - name: 'Build and Push Docker Image'
+           uses: azure/docker-login@v1
+           ...
+     ```
+
+> **Nota**: Este processo deve ser realizado tanto para o backend quanto para o frontend.
+
+---
+
+## 7. Validação Pós-Deploy
+
+### Checklist de Validação
+- Verificar o status dos Azure Container Apps.
+- Testar manualmente as principais rotas da API nos endereços:
+  - Frontend: [https://api5frontend.kindmushroom-02aec086.brazilsouth.azurecontainerapps.io](https://api5frontend.kindmushroom-02aec086.brazilsouth.azurecontainerapps.io).
+  - Backend: [https://api5backend.kindmushroom-02aec086.brazilsouth.azurecontainerapps.io/swagger/index.html](https://api5backend.kindmushroom-02aec086.brazilsouth.azurecontainerapps.io/swagger/index.html).
+
+---
