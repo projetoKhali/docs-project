@@ -12,8 +12,6 @@ Este repositório contém as documentações dos projetos da KHALI, incluindo ba
 - [Perguntas ao cliente](./api5/customer-questionnaire.md)
 - [Documentação do banco de dados](./api5/bd_documentation.pdf)
 - [Pipelines](./api5/ci-documentation.md)
-- [Testes de Integração](./api5/integration-tests.md)
 - [Deploy](./api5/deploy.md)
-- [Monitoramento](./api5/monitoramento.md)
 
 </details>
